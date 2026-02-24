@@ -619,49 +619,31 @@
     }
   });
 
-  function procesarGuardado(tipo, hoja, idEditando, payload, requeridos, apiUpdate, arrayLocal, keyID) {
+function procesarGuardado(tipo, hoja, idEditando, payload, requeridos, apiUpdate, arrayLocal, keyID) {
     const btn = document.getElementById(`btn-guardar-${tipo}`);
     const errDiv = document.getElementById(tipo === "turno" ? "err-turno" : "error-global");
     if(errDiv) errDiv.style.display = "none";
     for (let c of requeridos) if (!payload[c]) { alert(`Falta: ${c}`); return; }
     btn.disabled = true; btn.textContent = "Guardando...";
 
-if (idEditando) {
-    payload[keyID] = idEditando;
-    fetchAPI(apiUpdate, { objetoDatos: payload }).then(res => {
-      btn.disabled = false;
-      if (res.ok) {
-         const idx = arrayLocal.findIndex(x => x[keyID] === idEditando);
-         if (idx !== -1) {
-           if (arrayLocal[idx]["Fecha de hoy"]) payload["Fecha de hoy"] = arrayLocal[idx]["Fecha de hoy"];
-           arrayLocal[idx] = payload;
-         }
-         if(tipo==="turno") cancelarEdicionTurno(); else if(tipo==="cliente") cancelarEdicionCliente(); else if(tipo==="cancha") cancelarEdicionCancha(); else if(tipo==="mant") cancelarEdicionMant(); else if(tipo==="caja") cancelarEdicionCaja();
-         renderTablas(); renderSelects();
-         if(tipo==="caja") filtrarCaja();
-         alert("Actualizado.");
-      } else { alert("Error: " + res.error); }
-    }).catch(err => { btn.disabled = false; alert("Error de red: " + err); });
-  } else {
-    fetchAPI('guardarDato', { hoja: hoja, objetoDatos: payload }).then(res => {
-      btn.disabled = false; btn.textContent = "Guardar";
-      if (res.ok) {
-         payload[keyID] = res.id;
-         if(tipo==="turno") { payload["Fecha de hoy"] = new Date().toISOString().substring(0,10); limpiarFormTurno(); }
-         else if(tipo==="cliente") { document.getElementById("c-nombre").value=""; document.getElementById("c-tel").value=""; document.getElementById("c-email").value=""; }
-         else if(tipo==="cancha") { document.getElementById("ca-nombre").value=""; document.getElementById("ca-obs").value=""; }
-         else if(tipo==="mant") { document.getElementById("m-tarea").value=""; document.getElementById("m-obs").value=""; }
-         else if(tipo==="caja") { document.getElementById("cj-total").value=""; document.getElementById("cj-turno").value=""; }
-         
-         arrayLocal.push(payload);
-         renderTablas(); renderSelects();
-         if(tipo==="caja") filtrarCaja();
-         alert("Creado.");
-      } else { alert("Error: " + res.error); }
-    }).catch(err => { btn.disabled = false; btn.textContent = "Guardar"; alert("Error de red: " + err); });
-  }
-else {
-      google.script.run.withSuccessHandler(res => {
+    if (idEditando) {
+      payload[keyID] = idEditando;
+      fetchAPI(apiUpdate, { objetoDatos: payload }).then(res => {
+        btn.disabled = false;
+        if (res.ok) {
+           const idx = arrayLocal.findIndex(x => x[keyID] === idEditando);
+           if (idx !== -1) {
+             if (arrayLocal[idx]["Fecha de hoy"]) payload["Fecha de hoy"] = arrayLocal[idx]["Fecha de hoy"];
+             arrayLocal[idx] = payload;
+           }
+           if(tipo==="turno") cancelarEdicionTurno(); else if(tipo==="cliente") cancelarEdicionCliente(); else if(tipo==="cancha") cancelarEdicionCancha(); else if(tipo==="mant") cancelarEdicionMant(); else if(tipo==="caja") cancelarEdicionCaja();
+           renderTablas(); renderSelects();
+           if(tipo==="caja") filtrarCaja();
+           alert("Actualizado.");
+        } else { alert("Error: " + res.error); }
+      }).catch(err => { btn.disabled = false; alert("Error de red: " + err); });
+    } else {
+      fetchAPI('guardarDato', { hoja: hoja, objetoDatos: payload }).then(res => {
         btn.disabled = false; btn.textContent = "Guardar";
         if (res.ok) {
            payload[keyID] = res.id;
@@ -676,7 +658,7 @@ else {
            if(tipo==="caja") filtrarCaja();
            alert("Creado.");
         } else { alert("Error: " + res.error); }
-      }).api_guardarDato(hoja, payload);
+      }).catch(err => { btn.disabled = false; btn.textContent = "Guardar"; alert("Error de red: " + err); });
     }
   }
 
