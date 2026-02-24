@@ -584,7 +584,7 @@
   }
 
   /* --- CRUD FUNCTIONS --- */
-  function renderSelects() {
+function renderSelects() {
     llenarSelect("t-cancha", DATOS.canchas, "IDCancha", "Nombre de la cancha");
     llenarSelect("t-cliente", DATOS.clientes, "IDCliente", "Nombre y Apellido");
     llenarSelectSimple("t-estado", DATOS.listas["EstadoTurno"] || []);
@@ -605,7 +605,7 @@
     turnosOrdenados.forEach(t => {
       const nomCancha = buscar(DATOS.canchas, "IDCancha", t["IDCancha"], "Nombre de la cancha");
       const fecha = t["Fecha Reserva"] ? String(t["Fecha Reserva"]).substring(0,10) : "S/F";
-      const texto = `${fecha} | ${t["Hora Inicio"]}-${t["Hora Fin"]} | ${nomCancha}`;
+      const texto = `${fecha} | ${formatearHora(t["Hora Inicio"])}-${formatearHora(t["Hora Fin"])} | ${nomCancha}`;
       selCajaTurno.innerHTML += `<option value="${t["IDTurno"]}">${texto}</option>`;
     });
   }
@@ -661,8 +661,7 @@ function procesarGuardado(tipo, hoja, idEditando, payload, requeridos, apiUpdate
       }).catch(err => { btn.disabled = false; btn.textContent = "Guardar"; alert("Error de red: " + err); });
     }
   }
-
-  function editarTurno(id) { const t=DATOS.turnos.find(x=>x.IDTurno===id); if(!t)return; ID_TURNO_EDITANDO=id; document.getElementById("t-cancha").value=t["IDCancha"]||""; document.getElementById("t-cliente").value=t["IDCliente"]||""; if(t["Fecha Reserva"]) document.getElementById("t-fecha").value=String(t["Fecha Reserva"]).substring(0,10); document.getElementById("t-ini").value=t["Hora Inicio"]||""; document.getElementById("t-fin").value=t["Hora Fin"]||""; document.getElementById("t-estado").value=t["EstadoTurno"]||""; document.getElementById("t-metodo").value=t["MetodoPago"]||""; document.getElementById("t-total").value=t["Total"]||""; document.getElementById("t-obs").value=t["Observacion del turno"]||""; toggleModoEdicion("turno",true); }
+function editarTurno(id) { const t=DATOS.turnos.find(x=>x.IDTurno===id); if(!t)return; ID_TURNO_EDITANDO=id; document.getElementById("t-cancha").value=t["IDCancha"]||""; document.getElementById("t-cliente").value=t["IDCliente"]||""; if(t["Fecha Reserva"]) document.getElementById("t-fecha").value=String(t["Fecha Reserva"]).substring(0,10); document.getElementById("t-ini").value=formatearHora(t["Hora Inicio"]); document.getElementById("t-fin").value=formatearHora(t["Hora Fin"]); document.getElementById("t-estado").value=t["EstadoTurno"]||""; document.getElementById("t-metodo").value=t["MetodoPago"]||""; document.getElementById("t-total").value=t["Total"]||""; document.getElementById("t-obs").value=t["Observacion del turno"]||""; toggleModoEdicion("turno",true); }
   function cancelarEdicionTurno() { ID_TURNO_EDITANDO=null; limpiarFormTurno(); toggleModoEdicion("turno",false); }
   function limpiarFormTurno(){ document.getElementById("t-total").value=""; document.getElementById("t-obs").value=""; document.getElementById("t-ini").value=""; document.getElementById("t-fin").value=""; document.getElementById("t-fecha").valueAsDate=new Date(); }
   function guardarTurno() { procesarGuardado("turno", "Turnos", ID_TURNO_EDITANDO, { "IDCancha": val("t-cancha"), "IDCliente": val("t-cliente"), "Fecha Reserva": val("t-fecha"), "Hora Inicio": val("t-ini"), "Hora Fin": val("t-fin"), "EstadoTurno": val("t-estado"), "MetodoPago": val("t-metodo"), "Observacion del turno": val("t-obs"), "Total": val("t-total"), "Fecha de hoy": "HOY" }, ["IDCancha","IDCliente","Fecha Reserva"], "api_actualizarTurno", DATOS.turnos, "IDTurno"); }
@@ -683,14 +682,14 @@ function procesarGuardado(tipo, hoja, idEditando, payload, requeridos, apiUpdate
   function cancelarEdicionCaja(){ ID_CAJA_EDITANDO=null; document.getElementById("cj-turno").value=""; document.getElementById("cj-cliente").value=""; document.getElementById("cj-total").value=""; setFechaHoraLocal("cj-fecha",new Date()); toggleModoEdicion("caja",false); }
   function guardarCaja(){ procesarGuardado("caja", "Caja", ID_CAJA_EDITANDO, { "IDTurno": val("cj-turno"), "IDCliente": val("cj-cliente"), "FechaHora": val("cj-fecha").replace("T"," "), "Total": val("cj-total"), "MetodoPago": val("cj-metodo") }, ["IDCliente","Total","FechaHora"], "api_actualizarCaja", DATOS.caja, "IDCaja"); }
 
-  function renderTablas() {
+function renderTablas() {
     const tbodyT = document.getElementById("tabla-turnos");
     const turnosOrd = [...DATOS.turnos].sort((a,b) => (b["Fecha Reserva"]||"").localeCompare(a["Fecha Reserva"]||""));
     tbodyT.innerHTML = turnosOrd.map(t => {
       const nomCancha = buscar(DATOS.canchas, "IDCancha", t["IDCancha"], "Nombre de la cancha");
       const nomCliente = buscar(DATOS.clientes, "IDCliente", t["IDCliente"], "Nombre y Apellido");
       const fecha = t["Fecha Reserva"] ? String(t["Fecha Reserva"]).substring(0,10) : "";
-      return `<tr><td><button class="btn-edit" onclick="editarTurno('${t["IDTurno"]}')">✏️</button></td><td><b>${fecha}</b></td><td>${t["Hora Inicio"]||""} - ${t["Hora Fin"]||""}</td><td>${nomCancha}</td><td>${nomCliente}</td><td><span class="badge">${t["EstadoTurno"]||""}</span></td><td>${t["Total"]?"$"+t["Total"]:""}</td><td>${t["MetodoPago"]||""}</td><td style="font-style:italic;color:#666;max-width:150px;overflow:hidden;text-overflow:ellipsis;">${t["Observacion del turno"]||""}</td></tr>`;
+      return `<tr><td><button class="btn-edit" onclick="editarTurno('${t["IDTurno"]}')">✏️</button></td><td><b>${fecha}</b></td><td>${formatearHora(t["Hora Inicio"])} - ${formatearHora(t["Hora Fin"])}</td><td>${nomCancha}</td><td>${nomCliente}</td><td><span class="badge">${t["EstadoTurno"]||""}</span></td><td>${t["Total"]?"$"+t["Total"]:""}</td><td>${t["MetodoPago"]||""}</td><td style="font-style:italic;color:#666;max-width:150px;overflow:hidden;text-overflow:ellipsis;">${t["Observacion del turno"]||""}</td></tr>`;
     }).join("");
     document.getElementById("tabla-clientes").innerHTML = DATOS.clientes.map(c => `<tr><td><button class="btn-edit" onclick="editarCliente('${c["IDCliente"]}')">✏️</button></td><td><b>${c["Nombre y Apellido"]}</b></td><td>${c["Numero de teléfono"]}</td><td>${c["Email"]}</td></tr>`).join("");
     document.getElementById("tabla-canchas").innerHTML = DATOS.canchas.map(c => `<tr><td><button class="btn-edit" onclick="editarCancha('${c["IDCancha"]}')">✏️</button></td><td><b>${c["Nombre de la cancha"]}</b></td><td>${c["TipoCancha"]}</td><td>${c["Estado de la cancha"]}</td><td>${c["Está activa?"]}</td><td>${c["Observación De la cancha"]||""}</td></tr>`).join("");
@@ -717,6 +716,7 @@ function procesarGuardado(tipo, hoja, idEditando, payload, requeridos, apiUpdate
   function val(id) { return document.getElementById(id).value; }
   function mostrarVista(nombre) { document.querySelectorAll(".view-section").forEach(e => e.classList.add("hidden")); document.querySelectorAll(".tab-btn").forEach(e => e.classList.remove("active")); document.getElementById("view-"+nombre).classList.remove("hidden"); event.target.classList.add("active"); }
   function mostrarErrorCritico(msg) { document.getElementById("error-global").textContent = msg; document.getElementById("error-global").style.display = "block"; }
+  function formatearHora(str) { if (!str) return ""; const match = String(str).match(/(\d{2}:\d{2})/); return match ? match[1] : str; }
 </script>
 
 </body>
