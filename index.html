@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestión Turnos</title>
+  
+  <style>
+    /* =========================================
+       ESTILO GOOGLE RETRO (CIRCA 2010-2012)
+       ========================================= */
+    :root {
+      /* Paleta Google 2010 */
+      --g-blue-light: #4d90fe;
+      --g-blue-dark: #4787ed;
+      --g-border-blue: #3079ed;
+      
+      --g-grey-bg: #f5f5f5;
+      --g-grey-border: #dcdcdc;
+      --g-grey-text: #444;
+      
+      --g-red: #d14836;
+      --g-green: #3d9400;
+      
+      /* Fondo */
+      --bg-body: #ffffff;
+      --surface: #f1f1f1; /* Fondo grisaceo para contenedores */
+    }
+
+    body {
+      font-family: Arial, sans-serif; /* Tipografía clásica 2010 */
+      background-color: var(--bg-body);
+      color: #333;
+      margin: 0;
+      padding: 0; /* Quitamos padding body para la barra negra */
+      font-size: 13px;
+    }
+
+    * { box-sizing: border-box; }
+
+    /* BARRA NEGRA SUPERIOR (Universal Google Bar) */
+    .google-bar {
+      background: #2d2d2d;
+      height: 30px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      color: #ccc;
+      font-size: 11px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    .google-bar span { margin-right: 15px; cursor: pointer; }
+    .google-bar span:hover { color: #fff; }
+
+    .container {
+      max-width: 1200px; /* Un poco más estrecho, típico de esa época */
+      margin: 0 auto;
+      padding: 0 20px 20px 20px;
+    }
+
+    /* HEADER LOGO */
+    h1 {
+      font-family: 'Times New Roman', serif; /* Simulando fuente Catull */
+      font-size: 32px;
+      letter-spacing: -1px;
+      margin-bottom: 15px;
+    }
+
+    /* LAYOUT */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    @media(min-width: 900px) { .grid { grid-template-columns: 2fr 1fr; } }
+
+    /* CONTENEDORES (Estilo Web 2.0) */
+    .card {
+      background: #fff;
+      border: 1px solid #d3d3d3; /* Borde sólido simple */
+      padding: 20px;
+      /* Sin sombra flotante moderna, solo borde sólido */
+    }
+
+    h2 {
+      margin-top: 0;
+      font-size: 16px;
+      font-weight: bold;
+      color: #222;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+    }
+
+    /* TABS (Estilo Botones Gmail Viejo) */
+    .tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #ebebeb;
+    }
+
+    .tab-btn {
+      background: #f5f5f5; /* Degradado sutil */
+      background: -webkit-linear-gradient(top,#f5f5f5,#f1f1f1);
+      border: 1px solid #dcdcdc;
+      color: #444;
+      padding: 8px 12px;
+      border-radius: 2px; /* Esquinas casi rectas */
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 11px;
+      text-transform: none; /* No mayusculas */
+    }
+
+    .tab-btn:hover {
+      background: #f8f8f8;
+      border-color: #c6c6c6;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+      color: #222;
+    }
+
+    .tab-btn.active {
+      background: #4d90fe; /* Azul Clásico */
+      background: -webkit-linear-gradient(top,#4d90fe,#4787ed);
+      color: #fff;
+      border: 1px solid #3079ed;
+    }
+
+    /* INPUTS (Estilo Hundido) */
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: bold;
+      color: #222;
+      margin-bottom: 3px;
+      margin-top: 12px;
+      text-transform: none;
+    }
+    
+    input, select, textarea {
+      width: 100%;
+      padding: 5px;
+      font-size: 13px;
+      font-family: Arial, sans-serif;
+      border: 1px solid #d9d9d9;
+      border-top: 1px solid #c0c0c0;
+      background: #fff;
+      color: #000;
+      border-radius: 1px;
+      /* Sombra interna clásica */
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); 
+    }
+
+    input:focus, select:focus {
+      border: 1px solid #4d90fe;
+      outline: none;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.1), 0 0 5px rgba(77, 144, 254, 0.5); /* Glow azul */
+    }
+
+    /* BOTONES (Estilo Glossy/Degradado) */
+    button.action {
+      width: 100%;
+      padding: 8px 16px;
+      margin-top: 20px;
+      /* El famoso botón azul de Google */
+      background-color: #4d90fe;
+      background-image: -webkit-linear-gradient(top,#4d90fe,#4787ed);
+      border: 1px solid #3079ed;
+      color: white;
+      border-radius: 2px;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      text-shadow: 0 1px rgba(0,0,0,0.1);
+    }
+
+    button.action:hover {
+      background-color: #357ae8;
+      background-image: -webkit-linear-gradient(top,#4d90fe,#357ae8);
+      border-color: #2f5bb7;
+    }
+
+    button.action:disabled {
+      background: #f5f5f5;
+      color: #b8b8b8;
+      border: 1px solid #f1f1f1;
+      cursor: default;
+      background-image: none;
+    }
+
+    button.cancel {
+      background: none;
+      border: none;
+      color: #15c; /* Azul enlace clásico */
+      text-decoration: underline;
+      font-size: 11px;
+      cursor: pointer;
+      margin-top: 10px;
+      width: auto;
+      display: inline-block;
+    }
+    button.cancel:hover { color: #222; }
+
+    /* TABLAS (Estilo Google Docs Viejo) */
+    .table-container {
+      border: 1px solid #ccc;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    th {
+      text-align: left;
+      color: #222;
+      font-weight: bold;
+      padding: 8px;
+      border-bottom: 1px solid #ccc;
+      /* Degradado en cabecera de tabla */
+      background: #f1f1f1;
+      background: -webkit-linear-gradient(top, #f9f9f9, #ececec);
+    }
+
+    td {
+      padding: 8px;
+      border-bottom: 1px solid #e0e0e0;
+      color: #333;
+    }
+    
+    tr:hover td { background-color: #ffffdd; /* El clásico amarillo pálido de selección */ }
+
+    /* BOTÓN EDITAR (Lápiz) */
+    .btn-edit {
+      border: 1px solid #dcdcdc;
+      background: #f5f5f5;
+      background: -webkit-linear-gradient(top,#f5f5f5,#f1f1f1);
+      cursor: pointer;
+      padding: 3px 8px;
+      border-radius: 2px;
+      font-size: 10px;
+    }
+    .btn-edit:hover {
+      border-color: #c6c6c6;
+      background: #f8f8f8;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    }
+
+    /* FLASHCARDS (Estilo Widget iGoogle / Analytics) */
+    .flashcard-container {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        background: #f9f9f9;
+        padding: 15px;
+        border: 1px solid #e5e5e5;
+        border-radius: 2px;
+    }
+    .flashcard {
+        background: #fff;
+        border: 1px solid #dcdcdc;
+        border-radius: 0;
+        padding: 15px;
+        flex: 1;
+        /* Estilo visualización de datos vieja */
+        border-top: 3px solid #dd4b39; /* Rojo Google */
+    }
+    .flashcard-label {
+        color: #666;
+        font-size: 11px;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+    .flashcard-value {
+        font-size: 24px;
+        color: #222;
+        font-family: Arial, sans-serif;
+        font-weight: bold;
+    }
+    .flashcard-sub {
+        font-size: 11px;
+        color: #888;
+        margin-top: 2px;
+    }
+
+    /* BADGES */
+    .badge {
+      display: inline-block;
+      padding: 2px 5px;
+      border: 1px solid #ccc;
+      background: #f0f0f0;
+      font-size: 10px;
+      border-radius: 2px;
+      color: #444;
+    }
+
+    /* UTILIDADES */
+    .hidden { display: none !important; }
+    .loading { 
+      text-align: center; 
+      padding: 30px; 
+      color: #666; 
+      font-size: 14px; 
+      background: #ffffe0; /* Fondo amarillo carga */
+      border: 1px solid #e6db55;
+      margin-bottom: 20px;
+    }
+    .error-msg { 
+      background: #f9edbe; 
+      color: #222; 
+      padding: 10px; 
+      border: 1px solid #f0c36d; 
+      font-size: 12px; 
+      font-weight: bold;
+      display: none; 
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="google-bar">
+  <span>Web</span>
+  <span>Imágenes</span>
+  <span>Videos</span>
+  <span>Maps</span>
+  <span>Noticias</span>
+  <span style="color:#fff; font-weight:bold;">Turnos</span>
+  <span>Gmail</span>
+  <span style="margin-left:auto;">cuenta@google.com</span>
+</div>
+
+<div class="container">
+  
+  <div style="margin-bottom:20px;">
+    <h1 style="margin:0;">
+      <span style="color:#0037eb">G</span><span style="color:#d62d20">o</span><span style="color:#eeb211">o</span><span style="color:#0037eb">l</span> 
+      <span style="font-family:Arial,sans-serif; font-size:24px; color:#555; font-weight:normal;">Turnos</span>
+    </h1>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="mostrarVista('turnos')">Turnos</button>
+    <button class="tab-btn" onclick="mostrarVista('clientes')">Clientes</button>
+    <button class="tab-btn" onclick="mostrarVista('canchas')">Canchas</button>
+    <button class="tab-btn" onclick="mostrarVista('mant')">Mantenimiento</button>
+    <button class="tab-btn" onclick="mostrarVista('caja')">Caja</button>
+  </div>
+
+  <div id="loading" class="loading">Cargando sistema...</div>
+  <div id="error-global" class="error-msg"></div>
+
+  <div id="view-turnos" class="view-section">
+    <div class="grid">
+      <div class="card" style="overflow:hidden;">
+        <h2>Agenda de Turnos</h2>
+        <div class="table-container">
+          <table>
+            <thead><tr><th style="width:50px;">Editar</th><th>Reserva</th><th>Hora</th><th>Cancha</th><th>Cliente</th><th>Estado</th><th>Total</th><th>Pago</th><th>Obs</th></tr></thead>
+            <tbody id="tabla-turnos"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card" id="card-form-turno">
+        <h2 id="titulo-form-turno" style="color:#d14836;">Nuevo Turno</h2>
+        <div id="err-turno" class="error-msg"></div>
+        <label>Cancha</label><select id="t-cancha"></select>
+        <label>Cliente</label><select id="t-cliente"></select>
+        <label>Fecha Reserva</label><input type="date" id="t-fecha">
+        <div style="display:flex; gap:16px"><div style="flex:1"><label>Inicio</label><input type="time" id="t-ini"></div><div style="flex:1"><label>Fin</label><input type="time" id="t-fin"></div></div>
+        <div style="display:flex; gap:16px"><div style="flex:1"><label>Estado</label><select id="t-estado"></select></div><div style="flex:1"><label>Método Pago</label><select id="t-metodo"></select></div></div>
+        <label>Total ($)</label><input type="number" id="t-total" placeholder="0">
+        <label>Observación</label><input type="text" id="t-obs">
+        <button class="action" onclick="guardarTurno()" id="btn-guardar-turno">Crear Turno</button>
+        <button class="action cancel hidden" onclick="cancelarEdicionTurno()" id="btn-cancelar-turno">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-clientes" class="view-section hidden">
+    <div class="grid">
+      <div class="card">
+        <h2>Listado Clientes</h2>
+        <div class="table-container">
+          <table><thead><tr><th style="width:50px;">Editar</th><th>Nombre</th><th>Tel</th><th>Email</th></tr></thead><tbody id="tabla-clientes"></tbody></table>
+        </div>
+      </div>
+      <div class="card" id="card-form-cliente">
+        <h2 id="titulo-form-cliente" style="color:#d14836;">Nuevo Cliente</h2>
+        <label>Nombre y Apellido</label><input id="c-nombre">
+        <label>Teléfono</label><input id="c-tel">
+        <label>Email</label><input id="c-email">
+        <button class="action" onclick="guardarCliente()" id="btn-guardar-cliente">Guardar Cliente</button>
+        <button class="action cancel hidden" onclick="cancelarEdicionCliente()" id="btn-cancelar-cliente">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-canchas" class="view-section hidden">
+    <div class="grid">
+      <div class="card">
+        <h2>Listado Canchas</h2>
+        <div class="table-container">
+          <table><thead><tr><th style="width:50px;">Editar</th><th>Nombre</th><th>Tipo</th><th>Estado</th><th>Activa</th><th>Obs</th></tr></thead><tbody id="tabla-canchas"></tbody></table>
+        </div>
+      </div>
+      <div class="card" id="card-form-cancha">
+        <h2 id="titulo-form-cancha" style="color:#d14836;">Nueva Cancha</h2>
+        <label>Nombre</label><input id="ca-nombre">
+        <div style="display:flex; gap:16px"><div style="flex:1"><label>Tipo</label><select id="ca-tipo"></select></div><div style="flex:1"><label>Estado</label><select id="ca-estado"></select></div></div>
+        <label>¿Activa?</label><select id="ca-activa"><option value="TRUE">TRUE</option><option value="FALSE">FALSE</option></select>
+        <label>Observación</label><input id="ca-obs">
+        <button class="action" onclick="guardarCancha()" id="btn-guardar-cancha">Guardar Cancha</button>
+        <button class="action cancel hidden" onclick="cancelarEdicionCancha()" id="btn-cancelar-cancha">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-mant" class="view-section hidden">
+    <div class="grid">
+      <div class="card">
+        <h2>Registro de Mantenimiento</h2>
+        <div class="table-container">
+          <table><thead><tr><th style="width:50px;">Editar</th><th>Fecha</th><th>Cancha</th><th>Tarea</th><th>Estado</th><th>Obs</th></tr></thead><tbody id="tabla-mant"></tbody></table>
+        </div>
+      </div>
+      <div class="card" id="card-form-mant">
+        <h2 id="titulo-form-mant" style="color:#d14836;">Registrar Mantenimiento</h2>
+        <label>Cancha</label><select id="m-cancha"></select>
+        <label>Fecha</label><input type="date" id="m-fecha">
+        <label>Tarea</label><input id="m-tarea" placeholder="Ej: Pintar líneas...">
+        <label>Estado</label><select id="m-estado"></select>
+        <label>Observación</label><input id="m-obs">
+        <button class="action" onclick="guardarMant()" id="btn-guardar-mant">Guardar Registro</button>
+        <button class="action cancel hidden" onclick="cancelarEdicionMant()" id="btn-cancelar-mant">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-caja" class="view-section hidden">
+    <div class="grid">
+      <div class="card">
+        
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:15px;">
+           <div style="flex:1;">
+             <h2 style="margin:0; border:none; padding:0;">Movimientos de Caja</h2>
+             <span style="font-size:11px; color:#666;">Seleccioná una fecha para ver el resumen diario.</span>
+           </div>
+           <div style="width:200px;">
+             <label style="margin-top:0;">Filtrar por Fecha</label>
+             <input type="date" id="filtro-caja-fecha" onchange="filtrarCaja()">
+           </div>
+        </div>
+
+        <div class="flashcard-container" id="fc-container" style="display:none;">
+           <div class="flashcard">
+              <div class="flashcard-label">Total Recaudado</div>
+              <div class="flashcard-value" id="fc-total">$0</div>
+              <div class="flashcard-sub">en la fecha seleccionada</div>
+           </div>
+           <div class="flashcard" style="border-top-color: #4d90fe;">
+              <div class="flashcard-label">Movimientos</div>
+              <div class="flashcard-value" id="fc-count">0</div>
+              <div class="flashcard-sub">registros encontrados</div>
+           </div>
+        </div>
+        
+        <div class="table-container">
+          <table>
+            <thead><tr><th style="width:50px;">Editar</th><th>Fecha/Hora</th><th>Turno</th><th>Cliente</th><th>Total</th><th>Método</th></tr></thead>
+            <tbody id="tabla-caja"></tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div class="card" id="card-form-caja">
+        <h2 id="titulo-form-caja" style="color:#d14836;">Registrar Pago</h2>
+        <label>Seleccionar Turno</label><select id="cj-turno"><option value="">-- Pago General / Sin Turno --</option></select>
+        <label>Cliente</label><select id="cj-cliente"></select>
+        <label>Fecha y Hora</label><input type="datetime-local" id="cj-fecha">
+        <div style="display:flex; gap:16px"><div style="flex:1"><label>Total ($)</label><input type="number" id="cj-total"></div><div style="flex:1"><label>Método Pago</label><select id="cj-metodo"></select></div></div>
+        <button class="action" onclick="guardarCaja()" id="btn-guardar-caja">Guardar Movimiento</button>
+        <button class="action cancel hidden" onclick="cancelarEdicionCaja()" id="btn-cancelar-caja">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ATENCIÓN: Esta URL debe ser la que obtengas al realizar el Paso 3.
+  const API_URL = "https://script.google.com/macros/s/AKfycbxe48DouOm02jjfqzXjuh_uT3Ga84ulj2N8mDvAEl2m3E-ED3ah0DpY-UHoZ3E557sXOQ/exec"; 
+
+  async function fetchAPI(action, data = {}) {
+    const params = { action: action, ...data };
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify(params),
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Usar text/plain evita errores de CORS (Preflight OPTIONS) en Apps Script
+      redirect: 'follow'
+    });
+    return await response.json();
+  }
+
+  let DATOS = { listas: {}, clientes: [], canchas: [], turnos: [], mantenimiento: [], caja: [] };
+  let ID_TURNO_EDITANDO = null; let ID_CLIENTE_EDITANDO = null; let ID_CANCHA_EDITANDO = null; let ID_MANT_EDITANDO = null; let ID_CAJA_EDITANDO = null;
+
+  window.onload = async function() {
+    try {
+      const respuesta = await fetchAPI('cargarDatosIniciales');
+      procesarInicio(respuesta);
+    } catch (error) {
+      mostrarErrorCritico("Error de conexión con el servidor: " + error.message);
+    }
+  };
+  function procesarInicio(respuesta) {
+    document.getElementById("loading").style.display = "none";
+    if (!respuesta.ok) return mostrarErrorCritico("Error: " + respuesta.error);
+    DATOS = respuesta.data;
+    renderSelects(); renderTablas();
+    
+    // Fechas por defecto
+    const hoy = new Date();
+    document.getElementById("t-fecha").valueAsDate = hoy;
+    document.getElementById("m-fecha").valueAsDate = hoy;
+    setFechaHoraLocal("cj-fecha", hoy);
+    
+    // Inicializar filtro caja con hoy
+    document.getElementById("filtro-caja-fecha").valueAsDate = hoy;
+    filtrarCaja(); 
+  }
+
+  function setFechaHoraLocal(id, date) {
+    const iso = date.toLocaleString('sv').replace(' ', 'T').slice(0, 16);
+    document.getElementById(id).value = iso;
+  }
+
+  /* --- LOGICA FLASHCARD / FILTRO CAJA --- */
+  function filtrarCaja() {
+    const fechaFiltro = document.getElementById("filtro-caja-fecha").value; 
+    const fcContainer = document.getElementById("fc-container");
+    const tbody = document.getElementById("tabla-caja");
+    
+    let movimientosFiltrados = DATOS.caja;
+
+    if (fechaFiltro) {
+        fcContainer.style.display = "flex"; 
+        
+        movimientosFiltrados = DATOS.caja.filter(c => {
+            return String(c["FechaHora"]).startsWith(fechaFiltro);
+        });
+
+        const totalDia = movimientosFiltrados.reduce((acc, curr) => acc + Number(curr["Total"] || 0), 0);
+        const countDia = movimientosFiltrados.length;
+
+        document.getElementById("fc-total").textContent = "$" + totalDia.toLocaleString();
+        document.getElementById("fc-count").textContent = countDia;
+
+    } else {
+        fcContainer.style.display = "none"; 
+    }
+
+    tbody.innerHTML = movimientosFiltrados.map(c => {
+       const nomCliente = buscar(DATOS.clientes, "IDCliente", c["IDCliente"], "Nombre y Apellido");
+       let infoTurno = "S/Turno";
+       if(c["IDTurno"]) {
+          const t = DATOS.turnos.find(x => x.IDTurno === c["IDTurno"]);
+          if(t) {
+             const fechaT = t["Fecha Reserva"] ? String(t["Fecha Reserva"]).substring(0,10) : "";
+             infoTurno = `${fechaT} (${t["Hora Inicio"]})`;
+          }
+       }
+       return `<tr><td><button class="btn-edit" onclick="editarCaja('${c["IDCaja"]}')">✏️</button></td><td>${c["FechaHora"]||""}</td><td style="font-size:0.85em; color:#666;">${infoTurno}</td><td>${nomCliente}</td><td><b>$${c["Total"]||"0"}</b></td><td><span class="badge">${c["MetodoPago"]||""}</span></td></tr>`;
+    }).join("");
+  }
+
+  /* --- CRUD FUNCTIONS --- */
+  function renderSelects() {
+    llenarSelect("t-cancha", DATOS.canchas, "IDCancha", "Nombre de la cancha");
+    llenarSelect("t-cliente", DATOS.clientes, "IDCliente", "Nombre y Apellido");
+    llenarSelectSimple("t-estado", DATOS.listas["EstadoTurno"] || []);
+    llenarSelectSimple("t-metodo", DATOS.listas["MetodoPago"] || []);
+    
+    llenarSelectSimple("ca-tipo", DATOS.listas["TipoCancha"] || []);
+    llenarSelectSimple("ca-estado", DATOS.listas["EstadoCancha"] || []);
+
+    llenarSelect("m-cancha", DATOS.canchas, "IDCancha", "Nombre de la cancha");
+    llenarSelectSimple("m-estado", DATOS.listas["EstadoMantenimiento"] || ["Pendiente", "Terminado"]);
+
+    llenarSelect("cj-cliente", DATOS.clientes, "IDCliente", "Nombre y Apellido");
+    llenarSelectSimple("cj-metodo", DATOS.listas["MetodoPago"] || []);
+    
+    const selCajaTurno = document.getElementById("cj-turno");
+    selCajaTurno.innerHTML = '<option value="">-- Pago General / Sin Turno --</option>';
+    const turnosOrdenados = [...DATOS.turnos].sort((a,b) => (b["Fecha Reserva"]||"").localeCompare(a["Fecha Reserva"]||""));
+    turnosOrdenados.forEach(t => {
+      const nomCancha = buscar(DATOS.canchas, "IDCancha", t["IDCancha"], "Nombre de la cancha");
+      const fecha = t["Fecha Reserva"] ? String(t["Fecha Reserva"]).substring(0,10) : "S/F";
+      const texto = `${fecha} | ${t["Hora Inicio"]}-${t["Hora Fin"]} | ${nomCancha}`;
+      selCajaTurno.innerHTML += `<option value="${t["IDTurno"]}">${texto}</option>`;
+    });
+  }
+
+  document.getElementById("cj-turno").addEventListener("change", function() {
+    const t = DATOS.turnos.find(x => x.IDTurno === this.value);
+    if(t) {
+      if(t["IDCliente"]) document.getElementById("cj-cliente").value = t["IDCliente"];
+      if(t["Total"]) document.getElementById("cj-total").value = t["Total"];
+      if(t["MetodoPago"]) document.getElementById("cj-metodo").value = t["MetodoPago"];
+    }
+  });
+
+  function procesarGuardado(tipo, hoja, idEditando, payload, requeridos, apiUpdate, arrayLocal, keyID) {
+    const btn = document.getElementById(`btn-guardar-${tipo}`);
+    const errDiv = document.getElementById(tipo === "turno" ? "err-turno" : "error-global");
+    if(errDiv) errDiv.style.display = "none";
+    for (let c of requeridos) if (!payload[c]) { alert(`Falta: ${c}`); return; }
+    btn.disabled = true; btn.textContent = "Guardando...";
+
+if (idEditando) {
+    payload[keyID] = idEditando;
+    fetchAPI(apiUpdate, { objetoDatos: payload }).then(res => {
+      btn.disabled = false;
+      if (res.ok) {
+         const idx = arrayLocal.findIndex(x => x[keyID] === idEditando);
+         if (idx !== -1) {
+           if (arrayLocal[idx]["Fecha de hoy"]) payload["Fecha de hoy"] = arrayLocal[idx]["Fecha de hoy"];
+           arrayLocal[idx] = payload;
+         }
+         if(tipo==="turno") cancelarEdicionTurno(); else if(tipo==="cliente") cancelarEdicionCliente(); else if(tipo==="cancha") cancelarEdicionCancha(); else if(tipo==="mant") cancelarEdicionMant(); else if(tipo==="caja") cancelarEdicionCaja();
+         renderTablas(); renderSelects();
+         if(tipo==="caja") filtrarCaja();
+         alert("Actualizado.");
+      } else { alert("Error: " + res.error); }
+    }).catch(err => { btn.disabled = false; alert("Error de red: " + err); });
+  } else {
+    fetchAPI('guardarDato', { hoja: hoja, objetoDatos: payload }).then(res => {
+      btn.disabled = false; btn.textContent = "Guardar";
+      if (res.ok) {
+         payload[keyID] = res.id;
+         if(tipo==="turno") { payload["Fecha de hoy"] = new Date().toISOString().substring(0,10); limpiarFormTurno(); }
+         else if(tipo==="cliente") { document.getElementById("c-nombre").value=""; document.getElementById("c-tel").value=""; document.getElementById("c-email").value=""; }
+         else if(tipo==="cancha") { document.getElementById("ca-nombre").value=""; document.getElementById("ca-obs").value=""; }
+         else if(tipo==="mant") { document.getElementById("m-tarea").value=""; document.getElementById("m-obs").value=""; }
+         else if(tipo==="caja") { document.getElementById("cj-total").value=""; document.getElementById("cj-turno").value=""; }
+         
+         arrayLocal.push(payload);
+         renderTablas(); renderSelects();
+         if(tipo==="caja") filtrarCaja();
+         alert("Creado.");
+      } else { alert("Error: " + res.error); }
+    }).catch(err => { btn.disabled = false; btn.textContent = "Guardar"; alert("Error de red: " + err); });
+  }
+else {
+      google.script.run.withSuccessHandler(res => {
+        btn.disabled = false; btn.textContent = "Guardar";
+        if (res.ok) {
+           payload[keyID] = res.id;
+           if(tipo==="turno") { payload["Fecha de hoy"] = new Date().toISOString().substring(0,10); limpiarFormTurno(); }
+           else if(tipo==="cliente") { document.getElementById("c-nombre").value=""; document.getElementById("c-tel").value=""; document.getElementById("c-email").value=""; }
+           else if(tipo==="cancha") { document.getElementById("ca-nombre").value=""; document.getElementById("ca-obs").value=""; }
+           else if(tipo==="mant") { document.getElementById("m-tarea").value=""; document.getElementById("m-obs").value=""; }
+           else if(tipo==="caja") { document.getElementById("cj-total").value=""; document.getElementById("cj-turno").value=""; }
+           
+           arrayLocal.push(payload);
+           renderTablas(); renderSelects();
+           if(tipo==="caja") filtrarCaja();
+           alert("Creado.");
+        } else { alert("Error: " + res.error); }
+      }).api_guardarDato(hoja, payload);
+    }
+  }
+
+  function editarTurno(id) { const t=DATOS.turnos.find(x=>x.IDTurno===id); if(!t)return; ID_TURNO_EDITANDO=id; document.getElementById("t-cancha").value=t["IDCancha"]||""; document.getElementById("t-cliente").value=t["IDCliente"]||""; if(t["Fecha Reserva"]) document.getElementById("t-fecha").value=String(t["Fecha Reserva"]).substring(0,10); document.getElementById("t-ini").value=t["Hora Inicio"]||""; document.getElementById("t-fin").value=t["Hora Fin"]||""; document.getElementById("t-estado").value=t["EstadoTurno"]||""; document.getElementById("t-metodo").value=t["MetodoPago"]||""; document.getElementById("t-total").value=t["Total"]||""; document.getElementById("t-obs").value=t["Observacion del turno"]||""; toggleModoEdicion("turno",true); }
+  function cancelarEdicionTurno() { ID_TURNO_EDITANDO=null; limpiarFormTurno(); toggleModoEdicion("turno",false); }
+  function limpiarFormTurno(){ document.getElementById("t-total").value=""; document.getElementById("t-obs").value=""; document.getElementById("t-ini").value=""; document.getElementById("t-fin").value=""; document.getElementById("t-fecha").valueAsDate=new Date(); }
+  function guardarTurno() { procesarGuardado("turno", "Turnos", ID_TURNO_EDITANDO, { "IDCancha": val("t-cancha"), "IDCliente": val("t-cliente"), "Fecha Reserva": val("t-fecha"), "Hora Inicio": val("t-ini"), "Hora Fin": val("t-fin"), "EstadoTurno": val("t-estado"), "MetodoPago": val("t-metodo"), "Observacion del turno": val("t-obs"), "Total": val("t-total"), "Fecha de hoy": "HOY" }, ["IDCancha","IDCliente","Fecha Reserva"], "api_actualizarTurno", DATOS.turnos, "IDTurno"); }
+
+  function editarCliente(id){ const c=DATOS.clientes.find(x=>x.IDCliente===id); if(!c)return; ID_CLIENTE_EDITANDO=id; document.getElementById("c-nombre").value=c["Nombre y Apellido"]||""; document.getElementById("c-tel").value=c["Numero de teléfono"]||""; document.getElementById("c-email").value=c["Email"]||""; toggleModoEdicion("cliente",true); }
+  function cancelarEdicionCliente(){ ID_CLIENTE_EDITANDO=null; document.getElementById("c-nombre").value=""; document.getElementById("c-tel").value=""; document.getElementById("c-email").value=""; toggleModoEdicion("cliente",false); }
+  function guardarCliente(){ procesarGuardado("cliente", "Clientes", ID_CLIENTE_EDITANDO, { "Nombre y Apellido": val("c-nombre"), "Numero de teléfono": val("c-tel"), "Email": val("c-email") }, ["Nombre y Apellido"], "api_actualizarCliente", DATOS.clientes, "IDCliente"); }
+
+  function editarCancha(id){ const c=DATOS.canchas.find(x=>x.IDCancha===id); if(!c)return; ID_CANCHA_EDITANDO=id; document.getElementById("ca-nombre").value=c["Nombre de la cancha"]||""; document.getElementById("ca-tipo").value=c["TipoCancha"]||""; document.getElementById("ca-estado").value=c["Estado de la cancha"]||""; document.getElementById("ca-activa").value=c["Está activa?"]||"TRUE"; document.getElementById("ca-obs").value=c["Observación De la cancha"]||""; toggleModoEdicion("cancha",true); }
+  function cancelarEdicionCancha(){ ID_CANCHA_EDITANDO=null; document.getElementById("ca-nombre").value=""; document.getElementById("ca-obs").value=""; toggleModoEdicion("cancha",false); }
+  function guardarCancha(){ procesarGuardado("cancha", "Canchas", ID_CANCHA_EDITANDO, { "Nombre de la cancha": val("ca-nombre"), "TipoCancha": val("ca-tipo"), "Estado de la cancha": val("ca-estado"), "Observación De la cancha": val("ca-obs"), "Está activa?": val("ca-activa") }, ["Nombre de la cancha"], "api_actualizarCancha", DATOS.canchas, "IDCancha"); }
+
+  function editarMant(id){ const m=DATOS.mantenimiento.find(x=>x.IDMantenimiento===id); if(!m)return; ID_MANT_EDITANDO=id; document.getElementById("m-cancha").value=m["IDCancha"]||""; document.getElementById("m-tarea").value=m["Tarea a Realizar"]||""; if(m["Fecha de Observación"]) document.getElementById("m-fecha").value=String(m["Fecha de Observación"]).substring(0,10); document.getElementById("m-estado").value=m["EstadoMantenimiento"]||""; document.getElementById("m-obs").value=m["Observación de tarea"]||""; toggleModoEdicion("mant",true); }
+  function cancelarEdicionMant(){ ID_MANT_EDITANDO=null; document.getElementById("m-tarea").value=""; document.getElementById("m-obs").value=""; document.getElementById("m-fecha").valueAsDate=new Date(); toggleModoEdicion("mant",false); }
+  function guardarMant(){ procesarGuardado("mant", "Mantenimiento", ID_MANT_EDITANDO, { "IDCancha": val("m-cancha"), "Tarea a Realizar": val("m-tarea"), "Fecha de Observación": val("m-fecha"), "EstadoMantenimiento": val("m-estado"), "Observación de tarea": val("m-obs") }, ["IDCancha"], "api_actualizarMantenimiento", DATOS.mantenimiento, "IDMantenimiento"); }
+
+  function editarCaja(id){ const c=DATOS.caja.find(x=>x.IDCaja===id); if(!c)return; ID_CAJA_EDITANDO=id; document.getElementById("cj-turno").value=c["IDTurno"]||""; document.getElementById("cj-cliente").value=c["IDCliente"]||""; if(c["FechaHora"]) document.getElementById("cj-fecha").value=String(c["FechaHora"]).replace(" ","T"); document.getElementById("cj-total").value=c["Total"]||""; document.getElementById("cj-metodo").value=c["MetodoPago"]||""; toggleModoEdicion("caja",true); }
+  function cancelarEdicionCaja(){ ID_CAJA_EDITANDO=null; document.getElementById("cj-turno").value=""; document.getElementById("cj-cliente").value=""; document.getElementById("cj-total").value=""; setFechaHoraLocal("cj-fecha",new Date()); toggleModoEdicion("caja",false); }
+  function guardarCaja(){ procesarGuardado("caja", "Caja", ID_CAJA_EDITANDO, { "IDTurno": val("cj-turno"), "IDCliente": val("cj-cliente"), "FechaHora": val("cj-fecha").replace("T"," "), "Total": val("cj-total"), "MetodoPago": val("cj-metodo") }, ["IDCliente","Total","FechaHora"], "api_actualizarCaja", DATOS.caja, "IDCaja"); }
+
+  function renderTablas() {
+    const tbodyT = document.getElementById("tabla-turnos");
+    const turnosOrd = [...DATOS.turnos].sort((a,b) => (b["Fecha Reserva"]||"").localeCompare(a["Fecha Reserva"]||""));
+    tbodyT.innerHTML = turnosOrd.map(t => {
+      const nomCancha = buscar(DATOS.canchas, "IDCancha", t["IDCancha"], "Nombre de la cancha");
+      const nomCliente = buscar(DATOS.clientes, "IDCliente", t["IDCliente"], "Nombre y Apellido");
+      const fecha = t["Fecha Reserva"] ? String(t["Fecha Reserva"]).substring(0,10) : "";
+      return `<tr><td><button class="btn-edit" onclick="editarTurno('${t["IDTurno"]}')">✏️</button></td><td><b>${fecha}</b></td><td>${t["Hora Inicio"]||""} - ${t["Hora Fin"]||""}</td><td>${nomCancha}</td><td>${nomCliente}</td><td><span class="badge">${t["EstadoTurno"]||""}</span></td><td>${t["Total"]?"$"+t["Total"]:""}</td><td>${t["MetodoPago"]||""}</td><td style="font-style:italic;color:#666;max-width:150px;overflow:hidden;text-overflow:ellipsis;">${t["Observacion del turno"]||""}</td></tr>`;
+    }).join("");
+    document.getElementById("tabla-clientes").innerHTML = DATOS.clientes.map(c => `<tr><td><button class="btn-edit" onclick="editarCliente('${c["IDCliente"]}')">✏️</button></td><td><b>${c["Nombre y Apellido"]}</b></td><td>${c["Numero de teléfono"]}</td><td>${c["Email"]}</td></tr>`).join("");
+    document.getElementById("tabla-canchas").innerHTML = DATOS.canchas.map(c => `<tr><td><button class="btn-edit" onclick="editarCancha('${c["IDCancha"]}')">✏️</button></td><td><b>${c["Nombre de la cancha"]}</b></td><td>${c["TipoCancha"]}</td><td>${c["Estado de la cancha"]}</td><td>${c["Está activa?"]}</td><td>${c["Observación De la cancha"]||""}</td></tr>`).join("");
+    document.getElementById("tabla-mant").innerHTML = DATOS.mantenimiento.map(m => {
+       const nomCancha = buscar(DATOS.canchas, "IDCancha", m["IDCancha"], "Nombre de la cancha");
+       const fecha = m["Fecha de Observación"] ? String(m["Fecha de Observación"]).substring(0,10) : "";
+       return `<tr><td><button class="btn-edit" onclick="editarMant('${m["IDMantenimiento"]}')">✏️</button></td><td><b>${fecha}</b></td><td>${nomCancha}</td><td>${m["Tarea a Realizar"]}</td><td><span class="badge">${m["EstadoMantenimiento"]}</span></td><td>${m["Observación de tarea"]||""}</td></tr>`;
+    }).join("");
+    filtrarCaja();
+  }
+
+  function toggleModoEdicion(tipo, activado) {
+    const titulo = document.getElementById(`titulo-form-${tipo}`);
+    const btnGuardar = document.getElementById(`btn-guardar-${tipo}`);
+    const btnCancel = document.getElementById(`btn-cancelar-${tipo}`);
+    const card = document.getElementById(`card-form-${tipo}`);
+    if (activado) { titulo.textContent = `Editando...`; btnGuardar.textContent = "Guardar Cambios"; btnCancel.classList.remove("hidden"); card.scrollIntoView({ behavior: "smooth" }); } 
+    else { titulo.textContent = "Nuevo / Registrar"; btnGuardar.textContent = "Guardar"; btnCancel.classList.add("hidden"); }
+  }
+
+  function llenarSelect(id, datos, keyVal, keyText) { const sel = document.getElementById(id); const prev = sel.value; sel.innerHTML = '<option value="">-- Seleccionar --</option>'; datos.forEach(d => sel.innerHTML += `<option value="${d[keyVal]}">${d[keyText]}</option>`); if(prev) sel.value = prev; }
+  function llenarSelectSimple(id, textos) { const sel = document.getElementById(id); const prev = sel.value; sel.innerHTML = ""; textos.forEach(t => sel.innerHTML += `<option value="${t}">${t}</option>`); if(prev) sel.value = prev; }
+  function buscar(arr, keyId, valId, keyRet) { if(!arr) return valId; const item = arr.find(x => x[keyId] == valId); return item ? item[keyRet] : valId; }
+  function val(id) { return document.getElementById(id).value; }
+  function mostrarVista(nombre) { document.querySelectorAll(".view-section").forEach(e => e.classList.add("hidden")); document.querySelectorAll(".tab-btn").forEach(e => e.classList.remove("active")); document.getElementById("view-"+nombre).classList.remove("hidden"); event.target.classList.add("active"); }
+  function mostrarErrorCritico(msg) { document.getElementById("error-global").textContent = msg; document.getElementById("error-global").style.display = "block"; }
+</script>
+
+</body>
+</html>
