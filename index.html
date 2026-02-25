@@ -314,7 +314,7 @@
       border: 1px solid #e6db55;
       margin-bottom: 20px;
     }
-    .error-msg { 
+.error-msg { 
       background: #f9edbe; 
       color: #222; 
       padding: 10px; 
@@ -324,11 +324,35 @@
       display: none; 
       margin-bottom: 15px;
     }
+
+    /* PANTALLA DE LOGIN */
+    #login-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #f5f5f5; display: flex; align-items: center; justify-content: center; z-index: 9999;
+    }
+    .login-box {
+      background: #fff; padding: 30px; border: 1px solid #dcdcdc; border-top: 4px solid #4d90fe;
+      width: 300px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center;
+    }
+    .login-box h2 { margin-top: 0; border: none; font-size: 20px; font-family: 'Times New Roman', serif; }
+    #app-content { display: none; }
   </style>
 </head>
 <body>
 
-<div class="google-bar">
+<div id="login-overlay">
+  <div class="login-box">
+    <h2><span style="color:#0037eb">G</span><span style="color:#d62d20">o</span><span style="color:#eeb211">o</span><span style="color:#0037eb">l</span> Turnos</h2>
+    <p style="font-size:11px; color:#666; margin-bottom:20px;">Acceso Restringido</p>
+    <div id="login-error" class="error-msg" style="display:none; padding:5px; margin-bottom:10px;"></div>
+    <label style="text-align:left;">Contraseña</label>
+    <input type="password" id="login-pass" style="margin-bottom:15px;">
+    <button class="action" onclick="verificarLogin()" style="margin-top:0;">Ingresar</button>
+  </div>
+</div>
+
+<div id="app-content">
+  <div class="google-bar">
   <span>Web</span>
   <span>Imágenes</span>
   <span>Videos</span>
@@ -491,21 +515,20 @@
         <button class="action" onclick="guardarCaja()" id="btn-guardar-caja">Guardar Movimiento</button>
         <button class="action cancel hidden" onclick="cancelarEdicionCaja()" id="btn-cancelar-caja">Cancelar</button>
       </div>
-    </div>
-  </div>
-
 </div>
-
-<script>
+  </div>
+</div>
+</div> <script>
   // ATENCIÓN: Esta URL debe ser la que obtengas al realizar el Paso 3.
   const API_URL = "https://script.google.com/macros/s/AKfycbzz-0bZEHjGG6vtLf6EZ03yprsWvedsUpRBrrBSZVjXIGZV1Lk1tBPGfGozHOTm7CADgA/exec"; 
 
   async function fetchAPI(action, data = {}) {
-    const params = { action: action, ...data };
+    const clave = localStorage.getItem("app_clave") || "";
+    const params = { action: action, clave: clave, ...data };
     const response = await fetch(API_URL, {
       method: 'POST',
       body: JSON.stringify(params),
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Usar text/plain evita errores de CORS (Preflight OPTIONS) en Apps Script
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       redirect: 'follow'
     });
     return await response.json();
@@ -515,18 +538,92 @@
   let ID_TURNO_EDITANDO = null; let ID_CLIENTE_EDITANDO = null; let ID_CANCHA_EDITANDO = null; let ID_MANT_EDITANDO = null; let ID_CAJA_EDITANDO = null;
 
   window.onload = async function() {
-    try {
-      const respuesta = await fetchAPI('cargarDatosIniciales');
-      procesarInicio(respuesta);
-    } catch (error) {
-      mostrarErrorCritico("Error de conexión con el servidor: " + error.message);
+    document.getElementById("loading").style.display = "none";
+    const claveGuardada = localStorage.getItem("app_clave");
+    if (claveGuardada) {
+      document.getElementById("login-error").style.display = "block";
+      document.getElementById("login-error").style.background = "transparent";
+      document.getElementById("login-error").style.border = "none";
+      document.getElementById("login-error").textContent = "Verificando sesión...";
+      document.getElementById("login-pass").style.display = "none";
+      document.querySelector(".login-box button").style.display = "none";
+      
+      try {
+        const respuesta = await fetchAPI('cargarDatosIniciales');
+        if (respuesta.ok) {
+          arrancarAplicacion(respuesta);
+        } else {
+          reiniciarLogin();
+        }
+      } catch(e) { reiniciarLogin(); }
     }
   };
+
+  function reiniciarLogin() {
+    localStorage.removeItem("app_clave");
+    document.getElementById("login-error").style.background = "#f9edbe";
+    document.getElementById("login-error").style.border = "1px solid #f0c36d";
+    document.getElementById("login-error").textContent = "Sesión expirada o credenciales incorrectas.";
+    document.getElementById("login-pass").value = "";
+    document.getElementById("login-pass").style.display = "inline-block";
+    document.querySelector(".login-box button").style.display = "inline-block";
+  }
+
+  async function verificarLogin() {
+    const p = document.getElementById("login-pass").value;
+    if(!p) return;
+    
+    document.getElementById("login-error").style.display = "none";
+    document.getElementById("login-pass").disabled = true;
+    document.querySelector(".login-box button").disabled = true;
+    document.querySelector(".login-box button").textContent = "Verificando...";
+    
+    try {
+      const respuesta = await fetchAPI('cargarDatosIniciales', { clave: p });
+      if (respuesta.ok) {
+         localStorage.setItem("app_clave", p);
+         document.getElementById("login-pass").disabled = false;
+         document.querySelector(".login-box button").disabled = false;
+         document.querySelector(".login-box button").textContent = "Ingresar";
+         arrancarAplicacion(respuesta);
+      } else {
+         document.getElementById("login-error").style.display = "block";
+         document.getElementById("login-error").style.background = "#f9edbe";
+         document.getElementById("login-error").style.border = "1px solid #f0c36d";
+         document.getElementById("login-error").textContent = respuesta.error;
+         document.getElementById("login-pass").disabled = false;
+         document.querySelector(".login-box button").disabled = false;
+         document.querySelector(".login-box button").textContent = "Ingresar";
+      }
+    } catch (error) {
+      document.getElementById("login-error").style.display = "block";
+      document.getElementById("login-error").style.background = "#f9edbe";
+      document.getElementById("login-error").style.border = "1px solid #f0c36d";
+      document.getElementById("login-error").textContent = "Error de red.";
+      document.getElementById("login-pass").disabled = false;
+      document.querySelector(".login-box button").disabled = false;
+      document.querySelector(".login-box button").textContent = "Ingresar";
+    }
+  }
+
+  function arrancarAplicacion(respuesta) {
+    document.getElementById("login-overlay").style.display = "none";
+    document.getElementById("app-content").style.display = "block";
+    procesarInicio(respuesta);
+  }
+
   function procesarInicio(respuesta) {
-    document.getElementById("loading").style.display = "none";
-    if (!respuesta.ok) return mostrarErrorCritico("Error: " + respuesta.error);
     DATOS = respuesta.data;
     renderSelects(); renderTablas();
+    
+    const hoy = new Date();
+    document.getElementById("t-fecha").valueAsDate = hoy;
+    document.getElementById("m-fecha").valueAsDate = hoy;
+    setFechaHoraLocal("cj-fecha", hoy);
+    
+    document.getElementById("filtro-caja-fecha").valueAsDate = hoy;
+    filtrarCaja(); 
+  }
     
     // Fechas por defecto
     const hoy = new Date();
@@ -537,7 +634,7 @@
     // Inicializar filtro caja con hoy
     document.getElementById("filtro-caja-fecha").valueAsDate = hoy;
     filtrarCaja(); 
-  }
+  
 
   function setFechaHoraLocal(id, date) {
     const iso = date.toLocaleString('sv').replace(' ', 'T').slice(0, 16);
